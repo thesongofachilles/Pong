@@ -1,5 +1,5 @@
 import random
-from typing  import Tuple
+from typing import Tuple
 
 import pygame
 
@@ -51,6 +51,11 @@ def main():
     left_paddle_x, right_paddle_x = 100 - paddle_width, width - 100
     right_paddle_vel = left_paddle_vel = 0
 
+    # point counter
+    left_points = 0
+    right_points = 0
+    font = pygame.font.SysFont(None, 48)
+
     # mainloop
     while run:
         wn.fill(BLACK)
@@ -77,6 +82,11 @@ def main():
             vel_y *= -1
 
         if (ball_x <= 0 + radius) or (ball_x >= width - radius):
+            if ball_x < width/2:
+                right_points += 1
+            else:
+                left_points += 1
+
             ball_x, ball_y, vel_x, vel_y = reset_ball(speed, width, height)
 
         ball_x += vel_x
@@ -111,6 +121,13 @@ def main():
 
        # pygame.draw.line(wn, white, (100, 0), (100, height))
         #pygame.draw.line(wn, white, (width - 100, 0), (width - 100, height))
+
+        img = font.render(str(left_points), True, white)
+        wn.blit(img, (left_paddle_x, 20))
+
+        img = font.render(str(right_points), True, white)
+        wn.blit(img, (right_paddle_x, 20))
+
         pygame.display.update()
 
 
