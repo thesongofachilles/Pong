@@ -65,11 +65,31 @@ class Paddle:
     def __init__(self, x: int, y: int, velocity: float, width: int, height: int, screen_width: int, screen_height):
         self.x = x
         self.y = y
-        self.velocity = velocity
+        self.v = velocity
         self.width = width
-        self.width = height
+        self.height = height
         self.screen_width = screen_width
         self.screen_height = screen_height
+
+    def time_step(self):
+        self.y += self.v
+        if self.y >= self.screen_height  - self.height:
+            self.y = self.screen_height  - self.height
+        if self.y <= 0:
+            self.y = 0
+
+
+def detect_collision(ball: Ball, left_paddle: Paddle, right_paddle: Paddle):
+    if left_paddle.x <= ball.x <= left_paddle.x + left_paddle.width:
+        if left_paddle.y <= ball.y <= left_paddle.y + left_paddle.height:
+            ball.vx *= -1
+            ball.x = left_paddle.x + left_paddle.width
+
+    if right_paddle.x <= ball.x <= right_paddle.x + right_paddle.width:
+        if right_paddle.y <= ball.y <= right_paddle.y + right_paddle.height:
+            ball.vx *= -1
+            ball.x = right_paddle.x
+    return ball
 
 
 def main():
@@ -96,10 +116,6 @@ def main():
     left_paddle = Paddle(100 - paddle_width, paddle_y, 0, paddle_width, paddle_height, width, height)
     right_paddle = Paddle(width - 100, paddle_y, 0, paddle_width, paddle_height, width, height)
 
-    right_paddle_y = left_paddle_y = height / 2 - paddle_height / 2
-    left_paddle_x, right_paddle_x = 100 - paddle_width, width - 100
-    right_paddle_vel = left_paddle_vel = 0
-
     # point counter
     left_points = 0
     right_points = 0
@@ -113,18 +129,18 @@ def main():
                 run = False
             elif i.type == pygame.KEYDOWN:
                 if i.key == pygame.K_UP:
-                    right_paddle_vel = -0.7
+                    right_paddle.v = -0.7
                 if i.key == pygame.K_DOWN:
-                    right_paddle_vel = 0.7
+                    right_paddle.v = 0.7
                 if i.key == pygame.K_w:
-                    left_paddle_vel = -0.7
+                    left_paddle.v = -0.7
                 if i.key == pygame.K_s:
-                    left_paddle_vel = 0.7
+                    left_paddle.v = 0.7
             if i.type == pygame.KEYUP:
                 if i.key in [pygame.K_w, pygame.K_s]:
-                    left_paddle_vel = 0
+                    left_paddle.v = 0
                 elif i.key in [pygame.K_UP, pygame.K_DOWN]:
-                    right_paddle_vel = 0
+                    right_paddle.v = 0
 
         if (ball.x <= 0 + ball.radius) or (ball.x >= width - ball.radius):
             if ball.x < width/2:
@@ -135,41 +151,25 @@ def main():
 
         ball.time_step()
 
-        left_paddle_y += left_paddle_vel
-        right_paddle_y += right_paddle_vel
-
         # paddle's movement controls
-        if left_paddle_y >= height - paddle_height:
-            left_paddle_y = height - paddle_height
-        if left_paddle_y <= 0:
-            left_paddle_y = 0
-        if right_paddle_y >= height - paddle_height:
-            right_paddle_y = height - paddle_height
-        if right_paddle_y <= 0:
-            right_paddle_y = 0
+        left_paddle.time_step()
+        right_paddle.time_step()
 
-        if left_paddle_x <= ball.x <= left_paddle_x + paddle_width:
-            if left_paddle_y <= ball.y <= left_paddle_y + paddle_height:
-                ball.vx *= -1
-                ball.x = left_paddle_x +paddle_width
+        ball = detect_collision(ball, left_paddle, right_paddle)
 
-        if right_paddle_x <= ball.x <= right_paddle_x + paddle_width:
-            if right_paddle_y <= ball.y <= right_paddle_y + paddle_height:
-                ball.vx *= -1
-                ball.x = right_paddle_x
 
         pygame.draw.circle(wn, WHITE, (ball.x, ball.y), ball.radius)
-        pygame.draw.rect(wn, RED, pygame.Rect(left_paddle_x, left_paddle_y, paddle_width, paddle_height))
-        pygame.draw.rect(wn, RED, pygame.Rect(right_paddle_x, right_paddle_y, paddle_width, paddle_height))
+        pygame.draw.rect(wn, RED, pygame.Rect(left_paddle.x, left_paddle.y, paddle_width, paddle_height))
+        pygame.draw.rect(wn, RED, pygame.Rect(right_paddle.x, right_paddle.y, paddle_width, paddle_height))
 
-       # pygame.draw.line(wn, white, (100, 0), (100, height))
-        #pygame.draw.line(wn, white, (width - 100, 0), (width - 100, height))
+        # pygame.draw.line(wn, WHITE, (100, 0), (100, height))
+        # pygame.draw.line(wn, WHITE, (width - 100, 0), (width - 100, height))
 
         img = font.render(str(left_points), True, WHITE)
-        wn.blit(img, (left_paddle_x, 20))
+        wn.blit(img, (left_paddle.x, 20))
 
         img = font.render(str(right_points), True, WHITE)
-        wn.blit(img, (right_paddle_x, 20))
+        wn.blit(img, (right_paddle.x, 20))
 
         pygame.display.update()
 
